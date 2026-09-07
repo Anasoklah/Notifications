@@ -1,0 +1,37 @@
+services:
+ api : 
+  build :
+   context : .
+   dockerfile : Dockerfile
+  ports : 
+   - "5000:8080"
+  environment: 
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT} 
+      - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection}
+      - Firebase__ProjectId=${Firebase__ProjectId}
+      - Firebase__ClientEmail=${Firebase__ClientEmail}
+      - Firebase__PrivateKey=${Firebase__PrivateKey}
+  depends_on : 
+   - "db"
+  networks:
+   - notification-network
+
+ db:
+  image : postgres:16
+  environment : 
+   POSTGRES_USER : ${POSTGRES_USER}
+   POSTGRES_PASSWORD : ${POSTGRES_PASSWORD}
+   POSTGRES_DB : ${POSTGRES_DB}
+  ports : 
+   - "5435:5432"
+  networks:
+   - notification-network
+  volumes:
+   - notification-v:/var/lib/postgresql/data
+
+
+networks:
+ notification-network:
+
+volumes:
+ notification-v :         
