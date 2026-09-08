@@ -19,8 +19,44 @@ public class SmptService : ISmptService
         this._settings = options.Value;
     }
 
+    #region Public 
+    public async Task SendByTypeAsync(
+    EmailMessageType type,
+    string toEmail,
+    string payloadJson,
+    CancellationToken ct = default)
+    {
+        switch (type)
+        {
+            case EmailMessageType.ConfirmEmail:
+            {
+                var p = JsonSerializer.Deserialize<ConfirmEmailPayload>(payloadJson)
+                        ?? throw new InvalidOperationException("Invalid ConfirmEmail payload.");
+                await SendConfirmationEmail(toEmail, p.ConfirmToken, ct);
+                break;
+            }
+            case EmailMessageType.ResetPassword:
+            {
+                var p = JsonSerializer.Deserialize<ResetPasswordPayload>(payloadJson)
+                        ?? throw new InvalidOperationException("Invalid ResetPassword payload.");
+                await SendResetPasswordEmail(toEmail, p.ResetToken, ct);
+                break;
+            }
+            case EmailMessageType.TwoFactorCode:
+            {
+                var p = JsonSerializer.Deserialize<TwoFactorPayload>(payloadJson)
+                        ?? throw new InvalidOperationException("Invalid TwoFactor payload.");
+                await SendTwoFactorCodeEmail(toEmail, p.TwoFactorCode, ct);
+                break;
+            }
+            default:
+                throw new InvalidOperationException($"Unsupported email type: {type}");
+        }
+    }
+#endregion
 
-    public async Task SendConfirmationEmail(
+#region Private helpers
+    private async Task SendConfirmationEmail(
         string email,
         string confirmToken,
         CancellationToken ct = default
@@ -34,7 +70,7 @@ public class SmptService : ISmptService
         await SendEmailAsync(email, "Confirm your email", body, ct);
     }
 
-    public async Task SendResetPasswordEmail(
+    private async Task SendResetPasswordEmail(
         string email,
         string resestToken,
         CancellationToken ct = default
@@ -52,7 +88,7 @@ public class SmptService : ISmptService
             ct);
     }
 
-    public async Task SendTwoFactorCodeEmail(
+    private async Task SendTwoFactorCodeEmail(
         string email,
         string code,
         CancellationToken ct = default)
@@ -67,7 +103,7 @@ public class SmptService : ISmptService
             ct);
     }
 
-    #region Private helpers
+    
     private async Task SendEmailAsync(
         string email,
         string subject,
@@ -135,60 +171,25 @@ public class SmptService : ISmptService
 
         return message;
     }
+#endregion
 
-  
-     public async Task SendByTypeAsync(
-        EmailMessageType type,
-        string toEmail,
-        string payloadJson,
-        CancellationToken ct = default)
+
+
+#region Payload DTOs
+    public sealed class ConfirmEmailPayload
     {
-        switch (type)
-        {
-            case EmailMessageType.ConfirmEmail:
-            {
-                var p = JsonSerializer.Deserialize<ConfirmEmailPayload>(payloadJson)
-                        ?? throw new InvalidOperationException("Invalid ConfirmEmail payload.");
-                await SendConfirmationEmail(toEmail, p.ConfirmToken, ct);
-                break;
-            }
-            case EmailMessageType.ResetPassword:
-            {
-                var p = JsonSerializer.Deserialize<ResetPasswordPayload>(payloadJson)
-                        ?? throw new InvalidOperationException("Invalid ResetPassword payload.");
-                await SendResetPasswordEmail(toEmail, p.ResetToken, ct);
-                break;
-            }
-            case EmailMessageType.TwoFactorCode:
-            {
-                var p = JsonSerializer.Deserialize<TwoFactorPayload>(payloadJson)
-                        ?? throw new InvalidOperationException("Invalid TwoFactor payload.");
-                await SendTwoFactorCodeEmail(toEmail, p.TwoFactorCode, ct);
-                break;
-            }
-            default:
-                throw new InvalidOperationException($"Unsupported email type: {type}");
-        }
+        public string ConfirmToken { get; set; } = default!;
     }
 
-    #endregion
+    public sealed class ResetPasswordPayload
+    {
+        public string ResetToken { get; set; } = default!;
+    }
 
+    public sealed class TwoFactorPayload
+    {
+        public string TwoFactorCode { get; set; } = default!;
+    }
 
-
-  #region Payload DTOs
-public sealed class ConfirmEmailPayload
-{
-    public string ConfirmToken { get; set; } = default!;
-}
-
-public sealed class ResetPasswordPayload
-{
-    public string ResetToken { get; set; } = default!;
-}
-
-public sealed class TwoFactorPayload
-{
-    public string TwoFactorCode { get; set; } = default!;
-}
-}
 #endregion
+}
