@@ -1,6 +1,6 @@
 using NotificationService.Core.Enums;
 
-namespace NotificationService.Core.Dtos.DeviceToken;
+namespace NotificationService.Application.DTOs.DeviceToken;
 
 public record RegisterTokenResponseDto
 (

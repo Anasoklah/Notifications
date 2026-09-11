@@ -1,7 +1,6 @@
-using System;
-using NotificationService.Core.ValueObjects;
 
-namespace NotificationService.Core.Dtos.Notification;
+
+namespace NotificationService.Application.DTOs.Notification;
 
 public record UserNotificationDto
 (

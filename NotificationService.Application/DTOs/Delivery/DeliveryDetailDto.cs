@@ -1,4 +1,4 @@
-namespace NotificationService.Core.Dtos.Delivery;
+namespace NotificationService.Application.DTOs.Delivery;
 
 public record DeliveryDetailDto
 (

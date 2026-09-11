@@ -1,5 +1,4 @@
-
-namespace NotificationService.Core.Dtos.Smtp;
+namespace NotificationService.Application.DTOs.Smtp;
 
 public record SendEmailRequestDto
 (
