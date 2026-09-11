@@ -1,8 +1,8 @@
 
 using FluentValidation;
-using NotificationService.Core.Dtos.DeviceToken;
+using NotificationService.Application.DTOs.DeviceToken;
 
-namespace NotificationService.Core.FluentValidation
+namespace NotificationService.Application.FluentValidation
 {
    public class RegisterTokenRequestValidator : AbstractValidator<RegisterTokenRequestDto>
 {

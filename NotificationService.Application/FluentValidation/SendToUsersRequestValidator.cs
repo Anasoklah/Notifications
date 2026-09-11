@@ -1,7 +1,7 @@
 using FluentValidation;
-using NotificationService.Core.Dtos.Notification;
+using NotificationService.Application.DTOs.Notification;
 
-namespace NotificationService.Core.FluentValidation
+namespace NotificationService.Application.FluentValidation
 {
     public class SendToUsersRequestValidator : AbstractValidator<SendToUsersRequestDto>
 {

@@ -1,6 +1,6 @@
 
 using FluentValidation;
-using NotificationService.Core.Dtos.Smtp;
+using NotificationService.Application.DTOs.Smtp;
 
 namespace NotificationService.Core.FluentValidation;
 
