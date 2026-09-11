@@ -1,5 +1,4 @@
-
-namespace NotificationService.Core.Interfaces
+namespace NotificationService.Application.Interfaces.FCM
 {
 public interface IFcmSender
 {
