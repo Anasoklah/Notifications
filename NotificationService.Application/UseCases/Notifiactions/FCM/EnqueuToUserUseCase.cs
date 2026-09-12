@@ -1,7 +1,6 @@
 
 
 using System.Text.Json;
-using FluentValidation;
 using NotificationService.Application.DTOs.Notification;
 using NotificationService.Application.Interfaces.FCM;
 using NotificationService.Core.Entities;
@@ -9,14 +8,27 @@ using NotificationService.Core.Enums;
 
 namespace NotificationService.Application.UseCases.Notifiactions.FCM;
 
-public class EnqueuToUserUseCase(
-    IValidator<SendToUsersRequestDto> validator,
-    IFCMRepository repo)
+public class EnqueuToUserUseCase(IFCMRepository repo)
 {
       public async Task<NotificationResponseDto> EnqueueToUsersAsync(
         SendToUsersRequestDto request, CancellationToken ct = default)
     {
-        await validator.ValidateAndThrowAsync(request, ct);
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.UserIds is null || request.UserIds.Count == 0)
+            throw new ArgumentException("At least one UserId is required.", nameof(request));
+
+        if (request.UserIds.Count > 1000)
+            throw new ArgumentException("Cannot target more than 1000 users per request.", nameof(request));
+
+        if (request.UserIds.Any(string.IsNullOrWhiteSpace))
+            throw new ArgumentException("UserIds must not contain empty values.", nameof(request));
+
+        if (request.Title is null && request.Body is null)
+            throw new ArgumentException("At least Title or Body is required.", nameof(request));
+
+        if (request.ScheduledAt.HasValue && request.ScheduledAt.Value <= DateTime.UtcNow)
+            throw new ArgumentException("ScheduledAt must be in the future.", nameof(request));
 
         var notifications = request.UserIds
             .Select(userId => new OutboxNotification

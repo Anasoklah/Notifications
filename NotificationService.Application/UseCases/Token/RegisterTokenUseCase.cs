@@ -1,6 +1,5 @@
 
 
-using FluentValidation;
 using NotificationService.Application.DTOs.DeviceToken;
 using NotificationService.Application.Interfaces.Tokens;
 using NotificationService.Core.Entities;
@@ -11,10 +10,21 @@ public class RegisterTokenUseCase(ITokensRepository repo)
 {
      public async Task<RegisterTokenResponseDto> RegisterDeviceTokenAsync(
         RegisterTokenRequestDto request,
-        IValidator<RegisterTokenRequestDto> validator,
         CancellationToken ct = default)
     {
-        await validator.ValidateAndThrowAsync(request, ct);
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.UserId))
+            throw new ArgumentException("UserId is required.", nameof(request));
+
+        if (string.IsNullOrWhiteSpace(request.Token))
+            throw new ArgumentException("Token is required.", nameof(request));
+
+        if (request.Token.Length > 512)
+            throw new ArgumentException("Token must not exceed 512 characters.", nameof(request));
+
+        if (!Enum.IsDefined(request.Platform))
+            throw new ArgumentException("Platform must be Android, iOS, or Web.", nameof(request));
 
         var token = new DeviceToken
         {

@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Text.Json;
-using System.Threading.Tasks;
-using FluentValidation;
 using NotificationService.Application.DTOs.Notification;
 using NotificationService.Application.Interfaces.FCM;
 using NotificationService.Core.Entities;
@@ -12,13 +8,16 @@ using NotificationService.Core.Enums;
 namespace NotificationService.Application.UseCases.Notifiactions.FCM;
 
 public class EnqueueBroadcastUseCase(
-    IValidator<BroadcastRequestDto> validator,
     IFCMRepository repo)
 {
-      public async Task<NotificationResponseDto> EnqueueBroadcastAsync(
+    public async Task<NotificationResponseDto> EnqueueBroadcastAsync(
         BroadcastRequestDto request, CancellationToken ct = default)
     {
-        await validator.ValidateAndThrowAsync(request, ct);
+        if(request.ScheduledAt != null && request.ScheduledAt <= DateTime.UtcNow)
+         throw new InvalidDataException("scheduledAt Must be in the future");
+        
+        if(request.Title == null && request.Body == null) 
+            throw new ArgumentNullException("At least one of title or body should be not null");
 
         var notification = new OutboxNotification
         {
