@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Infrast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Api", "NotificationService.Api\NotificationService.Api.csproj", "{AF938FC4-67D5-4180-AD66-B9FB0BADB379}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Application", "NotificationService.Application\NotificationService.Application.csproj", "{D29D020C-6239-4EAD-BEAA-6528BFA051A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{AF938FC4-67D5-4180-AD66-B9FB0BADB379}.Release|x64.Build.0 = Release|Any CPU
 		{AF938FC4-67D5-4180-AD66-B9FB0BADB379}.Release|x86.ActiveCfg = Release|Any CPU
 		{AF938FC4-67D5-4180-AD66-B9FB0BADB379}.Release|x86.Build.0 = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|x64.Build.0 = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Debug|x86.Build.0 = Debug|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|x64.ActiveCfg = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|x64.Build.0 = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|x86.ActiveCfg = Release|Any CPU
+		{D29D020C-6239-4EAD-BEAA-6528BFA051A4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

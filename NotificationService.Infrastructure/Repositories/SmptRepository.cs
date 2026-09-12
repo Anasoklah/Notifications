@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using NotificationService.Application.Interfaces.Smtp;
 using NotificationService.Core.Entities;
 using NotificationService.Core.Enums;
-using NotificationService.Core.Interfaces;
 using NotificationService.Infrastructure.Data;
 
 namespace NotificationService.Infrastructure.Repositories

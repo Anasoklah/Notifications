@@ -1,17 +1,12 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NotificationService.Api.Filters;
-using NotificationService.Core.FluentValidation;
-using NotificationService.Core.Interfaces;
 using NotificationService.Infrastructure.Data;
-using NotificationService.Infrastructure.Repositories;
-using NotificationService.Infrastructure.Workers;
 using DotNetEnv;
 using NotificationService.Infrastructure.Services;
-using NotificationService.Infrastructure.Services.Smtp;
 using NotificationService.Infrastructure;
+using NotificationService.Application.FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 // .env lives in repo root (next to docker-compose.yaml), but the process CWD

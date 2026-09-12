@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using NotificationService.Core.Services;
+using NotificationService.Application.Interfaces.Processors;
+using NotificationService.Core.Enums;
 
 namespace NotificationService.Infrastructure.Workers;
 
@@ -25,7 +26,8 @@ public class FCMWorker(IServiceScopeFactory scopeFactory, ILogger<FCMWorker> log
     private async Task ProcessBatchAsync(CancellationToken ct)
     {
         using var scope = scopeFactory.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<NotificationProcessingService>();
-        await service.ProcessFcmBatchAsync(_workerId, ct);
+        var Factory = scope.ServiceProvider.GetRequiredService<INotificationProcessorFactory>();
+        var FCMProcessor = Factory.GetProcessor(NotificationType.FCM);
+        await FCMProcessor.ProcessAsync(_workerId , ct);
     }
 }

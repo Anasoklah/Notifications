@@ -1,17 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
-using NotificationService.Core.Dtos.DeviceToken;
-using NotificationService.Core.Services;
+using NotificationService.Application.DTOs.DeviceToken;
+using NotificationService.Application.UseCases.Token;
 
 namespace NotificationService.Api.Controllers;
 
 [ApiController]
 [Route("api/device-tokens")]
-public class DeviceTokensController(NotificationProcessingService service) : ControllerBase
+public class DeviceTokensController(
+    RegisterTokenUseCase RegisterUseCase,
+    DeActivationTokenUseCase deActivationTokenUseCase) : ControllerBase
 {
     [HttpPost("register")]
     public async Task<ActionResult<RegisterTokenResponseDto>> Register(
         [FromBody] RegisterTokenRequestDto request, CancellationToken ct) =>
-        Ok(await service.RegisterDeviceTokenAsync(request, ct));
+        Ok(await RegisterUseCase.RegisterDeviceTokenAsync(request, ct));
 
     [HttpDelete("deactivate")]
     public async Task<ActionResult> Deactivate(
@@ -20,7 +22,7 @@ public class DeviceTokensController(NotificationProcessingService service) : Con
         if (string.IsNullOrWhiteSpace(request.Token))
             return BadRequest(new { error = "Token is required." });
 
-        await service.DeactivateTokenAsync(request.Token, ct);
+        await deActivationTokenUseCase.DeactivateTokenAsync(request.Token, ct);
         return NoContent();
     }
 
@@ -30,7 +32,7 @@ public class DeviceTokensController(NotificationProcessingService service) : Con
         if (string.IsNullOrWhiteSpace(userId))
             return BadRequest(new { error = "UserId is required." });
 
-        await service.DeactivateAllUserTokensAsync(userId, ct);
+        await deActivationTokenUseCase.DeactivateAllUserTokensAsync(userId, ct);
         return NoContent();
     }
 }
