@@ -9,16 +9,17 @@ using NotificationService.Core.Enums;
 namespace NotificationService.Infrastructure.Processors;
 
 
-public class NotificationProcessor(
+public class FCMProcessor(
     ITokensRepository repo,
     IFCMRepository fCMRepository,
     IFcmSender fcm,
-    ILogger<NotificationProcessor> logger) : INotificationProcessor
+    ILogger<FCMProcessor> logger) : INotificationProcessor 
 {
-   
-    public async Task ProcessFcmBatchAsync(string workerId, CancellationToken ct = default)
+    public NotificationType Type => NotificationType.FCM;
+
+    public async Task ProcessAsync(string workerId, CancellationToken ct)
     {
-        await fCMRepository.ReleaseStaleLockAsync(TimeSpan.FromMinutes(5), ct);
+          await fCMRepository.ReleaseStaleLockAsync(TimeSpan.FromMinutes(5), ct);
 
         var batch = await fCMRepository.LockPendingBatchAsync(50, workerId, ct);
         if (batch.Count == 0) return;
@@ -75,4 +76,5 @@ public class NotificationProcessor(
 
     private static bool IsInvalidTokenError(string? error) =>
         error != null && (error.Contains("UNREGISTERED") || error.Contains("INVALID_ARGUMENT"));
+ 
 }

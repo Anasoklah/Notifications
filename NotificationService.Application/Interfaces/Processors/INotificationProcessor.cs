@@ -1,12 +1,11 @@
 
-using NotificationService.Application.DTOs.Delivery;
-using NotificationService.Application.DTOs.DeviceToken;
-using NotificationService.Application.DTOs.Notification;
+
+using NotificationService.Core.Enums;
 
 namespace NotificationService.Application.Interfaces.Processors;
 
 public interface INotificationProcessor
 {
-Task ProcessFcmBatchAsync(string workerId, CancellationToken ct = default);
+    NotificationType Type {get;}
+    public Task ProcessAsync(string workerId , CancellationToken cancellationToken);
 }
-

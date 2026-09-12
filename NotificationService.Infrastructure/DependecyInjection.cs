@@ -29,9 +29,12 @@ namespace NotificationService.Infrastructure
         services.AddScoped<ISmtpRepository, SmptRepository>();
 
         // Application services
-        services.AddScoped<INotificationProcessor,NotificationProcessor>();
-        services.AddScoped<EmailProcessor>();
-        
+        // services.AddScoped<IFCMProcessor,FCMProcessor>();
+        // services.AddScoped<ISmtpProcessor,SmtpProcessor>();
+
+        services.AddScoped<INotificationProcessor,FCMProcessor>();
+        services.AddScoped<INotificationProcessor,SmtpProcessor>();
+
         //workers
         services.AddHostedService<FCMWorker>();
         services.AddHostedService<SmtpWorker>();

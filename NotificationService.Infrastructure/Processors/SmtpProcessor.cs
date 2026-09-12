@@ -8,16 +8,16 @@ using NotificationService.Core.Enums;
 namespace NotificationService.Infrastructure.Processors;
 
 
-
-public class EmailProcessor(
+public class SmtpProcessor(
     ISmtpRepository repo,
     ISmptService smtp,
-    ILogger<EmailProcessor> logger) : IEmailProcessor
+    ILogger<SmtpProcessor> logger) : INotificationProcessor
 {
+    public NotificationType Type => NotificationType.Smtp;
 
-    public async Task ProcessEmailBatchAsync(string workerId, CancellationToken ct = default)
+    public async Task ProcessAsync(string workerId, CancellationToken ct)
     {
-        await repo.ReleaseStaleEmailLockAsync(TimeSpan.FromMinutes(5), ct);
+         await repo.ReleaseStaleEmailLockAsync(TimeSpan.FromMinutes(5), ct);
 
         var batch = await repo.LockPendingEmailBatchAsync(50, workerId, ct);
         if (batch.Count == 0) return;
@@ -57,6 +57,4 @@ public class EmailProcessor(
             }
         }
     }
-
-
 }
