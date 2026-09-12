@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
-using NotificationService.Core.Interfaces;
+using NotificationService.Application.Interfaces.FCM;
 
 namespace NotificationService.Infrastructure.Services;
 public class FcmSender(HttpClient httpClient,IConfiguration config) : IFcmSender

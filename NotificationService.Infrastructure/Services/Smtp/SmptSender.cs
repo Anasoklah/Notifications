@@ -3,20 +3,19 @@ using System.Text.Json;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using MimeKit.Encodings;
+using NotificationService.Application.Interfaces.Smtp;
 using NotificationService.Core.Enums;
-using NotificationService.Core.Interfaces;
 
 namespace NotificationService.Infrastructure.Services.Smtp;
 
-public class SmptService : ISmptService
+public class SmptSender : ISmptService
 {
     private readonly SmtpOptions _settings;
 
 
-    public SmptService(IOptions<SmtpOptions> options)
+    public SmptSender(IOptions<SmtpOptions> options)
     {
-        this._settings = options.Value;
+        _settings = options.Value;
     }
 
     #region Public 
