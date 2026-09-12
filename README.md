@@ -19,36 +19,39 @@ A .NET 8 ASP.NET Core Web API that sends **Firebase Cloud Messaging (FCM) push n
 - Entity Framework Core 8 + PostgreSQL 16
 - Firebase Cloud Messaging HTTP v1 API (FirebaseAdmin + Google OAuth)
 - MailKit (SMTP)
-- FluentValidation
+- FluentValidation validator definitions, with direct checks in the current use cases
 - Background workers via `BackgroundService`
 - Docker + Docker Compose
 
 ## Project Structure
 
 ```
-NotificationService.Api/           # Presentation layer - thin controllers + startup (composition root)
-└── Controllers/                   #   HTTP only: validate is delegated to services
-└── Filters/                       #   ValidationExceptionFilter -> 400
-└── Program.cs                     #   DI wiring, Swagger, .env loading
+NotificationService.Api/             # Presentation layer and composition root
+├── Controllers/                     # HTTP endpoints
+├── Filters/                         # API exception filters
+└── Program.cs                       # Configuration, Swagger, DI, and startup
 
-NotificationService.Core/          # Domain / application logic (no infra dependencies)
-├── Dtos/                          #   Request/response contracts
-├── Entities/                      #   DeviceToken, OutboxNotification, OutboxEmail, deliveries
-├── Enums/                         #   NotificationStatus, EmailMessageType, Platform
-├── FluentValidation/              #   Validators (auto-registered)
-├── Interfaces/                    #   Repository & sender abstractions
-├── Services/                      #   Application services (enqueue + batch processing)
-└── ValueObjects/                  #   LocalizedContent (EN/AR)
+NotificationService.Application/     # Application layer
+├── DTOs/                            # Request and response contracts
+├── FluentValidation/                # Validator definitions
+├── Interfaces/                      # Repository, sender, and processor contracts
+└── UseCases/                        # Operations called by controllers
 
-NotificationService.Infrastructure/ # Infrastructure layer - implementations
-├── Data/                          #   EF Core DbContext + entity configurations
-├── Migrations/
-├── Repositories/                  #   INotificationRepository / ISmtpRepository implementations
-├── Services/                      #   FcmSender, SmptService (MailKit), SmtpOptions
-└── Workers/                       #   FCMWorker + SmtpWorker (outbox consumers)
+NotificationService.Core/            # Domain layer
+├── Entities/                        # Tokens, outbox records, and deliveries
+├── Enums/                           # Statuses, platforms, and message types
+└── ValueObjects/                    # Localized notification content
+
+NotificationService.Infrastructure/  # Infrastructure implementations
+├── Data/                            # EF Core DbContext and configurations
+├── Migrations/                      # EF Core database migrations
+├── Repositories/                    # PostgreSQL repository implementations
+├── Services/                        # FCM and SMTP integrations
+├── Processors/                      # FCM and SMTP outbox processors
+└── Workers/                         # Background outbox workers
 ```
 
-The **application layer** lives in `NotificationService.Core/Services`: controllers just map HTTP to a service call, and the workers delegate the whole batch loop to the same services. All heavy work (fan-out, payload serialization, token resolution, retries) happens there.
+Controllers depend on application use cases. Use cases write pending records through application interfaces. Infrastructure implements those interfaces and runs the FCM and SMTP processors through background workers. Fan-out, payload serialization, token resolution, retries, and delivery tracking are handled outside the HTTP controllers.
 
 ## Prerequisites
 
@@ -211,24 +214,18 @@ Email type is stored on the outbox row; the SMTP worker picks the right template
 
 ## Validation
 
-Validators (FluentValidation) live in the application services, so every entry point — HTTP or worker — is validated. A global `ValidationExceptionFilter` converts validation failures into:
-
-```json
-[
-  { "propertyName": "token", "errorMessage": "Token is required." }
-]
-```
+The current enqueue and token-registration use cases perform their request checks directly in the application layer. The project also contains FluentValidation validator classes in `NotificationService.Application/FluentValidation`, and the API registers them during startup, but the use cases do not depend on `IValidator`.
 
 Key rules:
 
-- Device token registration: `userId` and `token` required (token <= 512 chars), `platform` must be `Android`/`IOS`/`Web`.
+- Device token registration: `userId` and `token` required (token <= 512 chars), `platform` must be a defined `Android`/`IOS`/`Web` value.
 - Broadcast/send: at least one of `title` or `body` required; `scheduledAt` must be in the future when provided.
 - Send to users: `userIds` required, non-empty, max 1000 per request.
 - Email: `toEmail` required and valid (<= 200), `token` required (<= 512), `scheduledAt` in the future when provided.
 
 ## How Processing Works (Outbox Pattern)
 
-Controllers only **enqueue**: they validate, write one or more outbox rows (`Pending`) and return `202` — no actual sending happens on the request path.
+Controllers only **enqueue**: use cases check the request, write one or more outbox rows (`Pending`) and return `202` — no actual sending happens on the request path.
 
 Two background workers consume the outbox tables every 5 seconds:
 
