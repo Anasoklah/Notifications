@@ -19,7 +19,7 @@ A .NET 8 ASP.NET Core Web API that sends **Firebase Cloud Messaging (FCM) push n
 - Entity Framework Core 8 + PostgreSQL 16
 - Firebase Cloud Messaging HTTP v1 API (FirebaseAdmin + Google OAuth)
 - MailKit (SMTP)
-- FluentValidation validator definitions, with direct checks in the current use cases
+- Direct application and domain validation
 - Background workers via `BackgroundService`
 - Docker + Docker Compose
 
@@ -33,7 +33,6 @@ NotificationService.Api/             # Presentation layer and composition root
 
 NotificationService.Application/     # Application layer
 ├── DTOs/                            # Request and response contracts
-├── FluentValidation/                # Validator definitions
 ├── Interfaces/                      # Repository, sender, and processor contracts
 └── UseCases/                        # Operations called by controllers
 
@@ -214,7 +213,7 @@ Email type is stored on the outbox row; the SMTP worker picks the right template
 
 ## Validation
 
-The current enqueue and token-registration use cases perform their request checks directly in the application layer. The project also contains FluentValidation validator classes in `NotificationService.Application/FluentValidation`, and the API registers them during startup, but the use cases do not depend on `IValidator`.
+The enqueue and token-registration use cases perform request checks directly in the application layer, while entity factories enforce domain invariants. Invalid arguments are returned by the API as `400 Bad Request` responses.
 
 Key rules:
 

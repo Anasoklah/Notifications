@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using NotificationService.Core.Enums;
 
 namespace NotificationService.Core.Entities;
@@ -31,6 +32,16 @@ namespace NotificationService.Core.Entities;
 
             if (toEmail.Length > 200)
                 throw new ArgumentException("Email must not exceed 200 characters.", nameof(toEmail));
+
+            try
+            {
+                if (new MailAddress(toEmail).Address != toEmail)
+                    throw new ArgumentException("Email format is invalid.", nameof(toEmail));
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException("Email format is invalid.", nameof(toEmail));
+            }
 
             if (!Enum.IsDefined(type))
                 throw new ArgumentException("Email type is invalid.", nameof(type));

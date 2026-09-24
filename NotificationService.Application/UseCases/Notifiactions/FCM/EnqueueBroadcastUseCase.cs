@@ -13,11 +13,7 @@ public class EnqueueBroadcastUseCase(
     public async Task<NotificationResponseDto> EnqueueBroadcastAsync(
         BroadcastRequestDto request, CancellationToken ct = default)
     {
-        if(request.ScheduledAt != null && request.ScheduledAt <= DateTime.UtcNow)
-         throw new InvalidDataException("scheduledAt Must be in the future");
-        
-        if(request.Title == null && request.Body == null) 
-            throw new ArgumentNullException("At least one of title or body should be not null");
+        ArgumentNullException.ThrowIfNull(request);
 
         var notification = OutboxNotification.CreateBroadcast(
             request.Title != null ? JsonSerializer.Serialize(request.Title) : null,

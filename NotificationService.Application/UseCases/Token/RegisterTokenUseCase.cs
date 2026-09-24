@@ -14,18 +14,6 @@ public class RegisterTokenUseCase(ITokensRepository repo)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (string.IsNullOrWhiteSpace(request.UserId))
-            throw new ArgumentException("UserId is required.", nameof(request));
-
-        if (string.IsNullOrWhiteSpace(request.Token))
-            throw new ArgumentException("Token is required.", nameof(request));
-
-        if (request.Token.Length > 512)
-            throw new ArgumentException("Token must not exceed 512 characters.", nameof(request));
-
-        if (!Enum.IsDefined(request.Platform))
-            throw new ArgumentException("Platform must be Android, iOS, or Web.", nameof(request));
-
         var token = DeviceToken.CreateDeviceToken(
             request.UserId,
             request.Token,
