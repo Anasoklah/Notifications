@@ -1,4 +1,3 @@
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NotificationService.Api.Filters;
@@ -6,7 +5,6 @@ using NotificationService.Infrastructure.Data;
 using DotNetEnv;
 using NotificationService.Infrastructure.Services;
 using NotificationService.Infrastructure;
-using NotificationService.Application.FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 // .env lives in repo root (next to docker-compose.yaml), but the process CWD
@@ -22,7 +20,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<ValidationExceptionFilter>();
+    options.Filters.Add<DomainExceptionFilter>();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -41,9 +39,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // HttpClient for FcmSender
 builder.Services.AddHttpClient<FcmSender>();
-
-// Validators
-builder.Services.AddValidatorsFromAssemblyContaining<RegisterTokenRequestValidator>();
 
 // Register Infra Services
 builder.Services.AddInfrastructure(builder.Configuration);

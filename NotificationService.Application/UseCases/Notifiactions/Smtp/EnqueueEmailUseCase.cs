@@ -1,7 +1,6 @@
 
 
 using System.Text.Json;
-using System.Net.Mail;
 using NotificationService.Application.DTOs.Smtp;
 using NotificationService.Application.Interfaces.Smtp;
 using NotificationService.Core.Entities;
@@ -11,42 +10,16 @@ namespace NotificationService.Application.UseCases.Notifiactions.Smtp;
 
 public class EnqueueEmailUseCase(ISmtpRepository repo)
 {
-
-    //  RuleFor(d => d.ToEmail).NotEmpty().EmailAddress().MaximumLength(200)
-    //     .WithMessage("Email is Required");
-        
-    //     RuleFor(d => d.Token)
-    //     .NotEmpty().WithMessage("token is Required")
-    //     .MaximumLength(512)
-    //     .WithMessage(" and maximum value is 512");
-        
-    //     RuleFor(x => x.ScheduledAt)
-    //     .GreaterThan(DateTime.UtcNow).WithMessage("ScheduledAt must be in the future.")
-    //     .When(x => x.ScheduledAt.HasValue);
       public async Task<SendEmailResponseDto> EnqueueEmailAsync(
         SendEmailRequestDto dto, EmailMessageType type, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
-        if (string.IsNullOrWhiteSpace(dto.ToEmail) || dto.ToEmail.Length > 200 || !IsValidEmail(dto.ToEmail))
-            throw new ArgumentException("Email is Required", nameof(dto));
-
-        if (string.IsNullOrWhiteSpace(dto.Token))
-            throw new ArgumentException("token is Required", nameof(dto));
-
-        if (dto.Token.Length > 512)
-            throw new ArgumentException(" and maximum value is 512", nameof(dto));
-
-        if (dto.ScheduledAt.HasValue && dto.ScheduledAt.Value <= DateTime.UtcNow)
-            throw new ArgumentException("ScheduledAt must be in the future.", nameof(dto));
-
-        var email = new OutboxEmail
-        {
-            ToEmail = dto.ToEmail,
-            PayloadJson = BuildPayload(type, dto.Token),
-            Type = type,
-            ScheduledAt = dto.ScheduledAt
-        };
+        var email = OutboxEmail.Create(
+            dto.ToEmail,
+            type,
+            BuildPayload(type, dto.Token),
+            dto.ScheduledAt);
 
         await repo.AddOutboxEmailAsync(email, ct);
 
@@ -57,7 +30,7 @@ public class EnqueueEmailUseCase(ISmtpRepository repo)
             email.ScheduledAt);
     }
 
-
+#region Helpers
     private static string BuildPayload(EmailMessageType type, string token) => type switch
     {
         EmailMessageType.ConfirmEmail => JsonSerializer.Serialize(new { ConfirmToken = token }),
@@ -66,15 +39,5 @@ public class EnqueueEmailUseCase(ISmtpRepository repo)
         _ => throw new InvalidOperationException($"Unsupported email type: {type}")
     };
 
-    private static bool IsValidEmail(string email)
-    {
-        try
-        {
-            return new MailAddress(email).Address == email;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
+#endregion
 }

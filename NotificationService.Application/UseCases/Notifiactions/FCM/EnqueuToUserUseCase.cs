@@ -30,17 +30,17 @@ public class EnqueuToUserUseCase(IFCMRepository repo)
         if (request.ScheduledAt.HasValue && request.ScheduledAt.Value <= DateTime.UtcNow)
             throw new ArgumentException("ScheduledAt must be in the future.", nameof(request));
 
+        var titleLocalized = request.Title != null ? JsonSerializer.Serialize(request.Title) : null;
+        var bodyLocalized = request.Body != null ? JsonSerializer.Serialize(request.Body) : null;
+        var data = request.Data != null ? JsonSerializer.Serialize(request.Data) : null;
+
         var notifications = request.UserIds
-            .Select(userId => new OutboxNotification
-            {
-                TargetUserId = userId,
-                IsBroadcast = false,
-                TitleLocalized = request.Title != null ? JsonSerializer.Serialize(request.Title) : null,
-                BodyLocalized = request.Body != null ? JsonSerializer.Serialize(request.Body) : null,
-                Data = request.Data != null ? JsonSerializer.Serialize(request.Data) : null,
-                ScheduledAt = request.ScheduledAt ?? DateTime.UtcNow,
-                Status = NotificationStatus.Pending
-            })
+            .Select(userId => OutboxNotification.CreateForUser(
+                userId,
+                titleLocalized,
+                bodyLocalized,
+                data,
+                request.ScheduledAt))
             .ToList();
 
         await repo.AddNotificationsAsync(notifications, ct);

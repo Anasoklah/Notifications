@@ -1,18 +1,20 @@
-using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace NotificationService.Api.Filters;
 
-public class ValidationExceptionFilter : IAsyncExceptionFilter
+public class DomainExceptionFilter : IAsyncExceptionFilter
 {
     public Task OnExceptionAsync(ExceptionContext context)
     {
-        if (context.Exception is not ValidationException ex)
+        if (context.Exception is not ArgumentException ex)
             return Task.CompletedTask;
 
-        context.Result = new BadRequestObjectResult(
-            ex.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }));
+        context.Result = new BadRequestObjectResult(new
+        {
+            error = ex.Message,
+            parameter = ex.ParamName
+        });
 
         context.ExceptionHandled = true;
         return Task.CompletedTask;

@@ -29,13 +29,11 @@ public class SmtpProcessor(
                 await smtp.SendByTypeAsync(email.Type, email.ToEmail, email.PayloadJson, ct);
 
                 await repo.AddEmailDeliveriesAsync(
-                    [new EmailDelivery
-                    {
-                        OutboxEmailId = email.Id,
-                        Status = NotificationStatus.Sent,
-                        SentAt = DateTime.UtcNow,
-                        AttemptNumber = email.RetryCount + 1
-                    }],
+                    [EmailDelivery.Create(
+                        email.Id,
+                        NotificationStatus.Sent,
+                        email.RetryCount + 1,
+                        DateTime.UtcNow)],
                     ct);
 
                 await repo.MarkEmailAsProcessedAsync(email.Id, ct);
@@ -43,13 +41,11 @@ public class SmtpProcessor(
             catch (Exception ex)
             {
                 await repo.AddEmailDeliveriesAsync(
-                    [new EmailDelivery
-                    {
-                        OutboxEmailId = email.Id,
-                        Status = NotificationStatus.Failed,
-                        Error = ex.Message,
-                        AttemptNumber = email.RetryCount + 1
-                    }],
+                    [EmailDelivery.Create(
+                        email.Id,
+                        NotificationStatus.Failed,
+                        email.RetryCount + 1,
+                        error: ex.Message)],
                     ct);
 
                 await repo.IncrementEmailRetryAsync(email.Id, ex.Message, ct);
