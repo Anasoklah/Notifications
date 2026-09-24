@@ -40,13 +40,11 @@ public class EnqueueEmailUseCase(ISmtpRepository repo)
         if (dto.ScheduledAt.HasValue && dto.ScheduledAt.Value <= DateTime.UtcNow)
             throw new ArgumentException("ScheduledAt must be in the future.", nameof(dto));
 
-        var email = new OutboxEmail
-        {
-            ToEmail = dto.ToEmail,
-            PayloadJson = BuildPayload(type, dto.Token),
-            Type = type,
-            ScheduledAt = dto.ScheduledAt
-        };
+        var email = OutboxEmail.Create(
+            dto.ToEmail,
+            type,
+            BuildPayload(type, dto.Token),
+            dto.ScheduledAt);
 
         await repo.AddOutboxEmailAsync(email, ct);
 

@@ -27,10 +27,6 @@ namespace NotificationService.Infrastructure.Repositories
 
     public async Task AddNotificationAsync(OutboxNotification notification, CancellationToken ct = default)
     {
-        notification.Id = Guid.NewGuid();
-        notification.CreatedAt = DateTime.UtcNow;
-        notification.Status = NotificationStatus.Pending;
-
         await db.OutboxNotifications.AddAsync(notification, ct);
         await db.SaveChangesAsync(ct);
     }
@@ -38,15 +34,7 @@ namespace NotificationService.Infrastructure.Repositories
     public async Task AddNotificationsAsync(
         IEnumerable<OutboxNotification> notifications, CancellationToken ct = default)
     {
-        var now = DateTime.UtcNow;
         var list = notifications.ToList();
-
-        foreach (var n in list)
-        {
-            n.Id = Guid.NewGuid();
-            n.CreatedAt = now;
-            n.Status = NotificationStatus.Pending;
-        }
 
         await db.OutboxNotifications.AddRangeAsync(list, ct);
         await db.SaveChangesAsync(ct);
@@ -80,11 +68,7 @@ namespace NotificationService.Infrastructure.Repositories
             }
 
             foreach (var item in batch)
-            {
-                item.Status = NotificationStatus.Processing;
-                item.LockedAt = now;
-                item.LockedBy = workerId;
-            }
+                item.MarkProcessing(workerId, now);
 
             await db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
@@ -100,13 +84,11 @@ namespace NotificationService.Infrastructure.Repositories
 
     public async Task MarkAsProcessedAsync(Guid notificationId, CancellationToken ct = default)
     {
-        await db.OutboxNotifications
-            .Where(n => n.Id == notificationId)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(n => n.Status, NotificationStatus.Sent)
-                .SetProperty(n => n.ProcessedAt, DateTime.UtcNow)
-                .SetProperty(n => n.LockedAt, (DateTime?)null)
-                .SetProperty(n => n.LockedBy, (string?)null), ct);
+        var notification = await db.OutboxNotifications
+            .FirstOrDefaultAsync(n => n.Id == notificationId, ct);
+
+        notification?.MarkProcessed(DateTime.UtcNow);
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task MarkAsFailedAsync(Guid notificationId, string error, CancellationToken ct = default)
@@ -129,14 +111,7 @@ namespace NotificationService.Infrastructure.Repositories
 
         if (notification is null) return;
 
-        notification.RetryCount++;
-        notification.LastError = error;
-        notification.LockedAt = null;
-        notification.LockedBy = null;
-
-        notification.Status = notification.RetryCount >= notification.MaxRetries
-            ? NotificationStatus.Failed
-            : NotificationStatus.Pending;
+        notification.RecordFailure(error);
 
         await db.SaveChangesAsync(ct);
     }
@@ -145,15 +120,17 @@ namespace NotificationService.Infrastructure.Repositories
     {
         var threshold = DateTime.UtcNow - lockExpiry;
 
-        await db.OutboxNotifications
+        var notifications = await db.OutboxNotifications
             .Where(n =>
                 n.Status == NotificationStatus.Processing &&
                 n.LockedAt != null &&
                 n.LockedAt < threshold)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(n => n.Status, NotificationStatus.Pending)
-                .SetProperty(n => n.LockedAt, (DateTime?)null)
-                .SetProperty(n => n.LockedBy, (string?)null), ct);
+            .ToListAsync(ct);
+
+        foreach (var notification in notifications)
+            notification.ReleaseStaleLock();
+
+        await db.SaveChangesAsync(ct);
     }
 
 
@@ -167,9 +144,6 @@ namespace NotificationService.Infrastructure.Repositories
         IEnumerable<NotificationDelivery> deliveries, CancellationToken ct = default)
     {
         var list = deliveries.ToList();
-
-        foreach (var d in list)
-            d.Id = Guid.NewGuid();
 
         await db.NotificationDeliveries.AddRangeAsync(list, ct);
         await db.SaveChangesAsync(ct);

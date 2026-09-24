@@ -47,17 +47,15 @@ public class FCMProcessor(
                     var (success, messageId, error) = await fcm.SendAsync(
                         token.Token, title, body, notification.Data, ct);
 
-                    deliveries.Add(new NotificationDelivery
-                    {
-                        OutboxNotificationId = notification.Id,
-                        DeviceTokenId = token.Id,
-                        Token = token.Token,
-                        Status = success ? NotificationStatus.Sent : NotificationStatus.Failed,
-                        SentAt = success ? DateTime.UtcNow : null,
-                        AttemptNumber = notification.RetryCount + 1,
-                        FcmMessageId = messageId,
-                        Error = error
-                    });
+                    deliveries.Add(NotificationDelivery.Create(
+                        notification.Id,
+                        token.Id,
+                        token.Token,
+                        success ? NotificationStatus.Sent : NotificationStatus.Failed,
+                        notification.RetryCount + 1,
+                        success ? DateTime.UtcNow : null,
+                        messageId,
+                        error));
 
                     if (!success && IsInvalidTokenError(error))
                         await repo.DeactivateTokenAsync(token.Token, ct);

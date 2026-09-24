@@ -19,15 +19,11 @@ public class EnqueueBroadcastUseCase(
         if(request.Title == null && request.Body == null) 
             throw new ArgumentNullException("At least one of title or body should be not null");
 
-        var notification = new OutboxNotification
-        {
-            IsBroadcast = true,
-            TitleLocalized = request.Title != null ? JsonSerializer.Serialize(request.Title) : null,
-            BodyLocalized = request.Body != null ? JsonSerializer.Serialize(request.Body) : null,
-            Data = request.Data != null ? JsonSerializer.Serialize(request.Data) : null,
-            ScheduledAt = request.ScheduledAt ?? DateTime.UtcNow,
-            Status = NotificationStatus.Pending
-        };
+        var notification = OutboxNotification.CreateBroadcast(
+            request.Title != null ? JsonSerializer.Serialize(request.Title) : null,
+            request.Body != null ? JsonSerializer.Serialize(request.Body) : null,
+            request.Data != null ? JsonSerializer.Serialize(request.Data) : null,
+            request.ScheduledAt);
 
         await repo.AddNotificationAsync(notification, ct);
 
