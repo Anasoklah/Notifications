@@ -10,10 +10,6 @@ namespace NotificationService.Infrastructure.Repositories
     {
         public async Task AddOutboxEmailAsync(OutboxEmail email, CancellationToken ct = default)
         {
-            email.Id = Guid.NewGuid();
-            email.CreatedAt = DateTime.UtcNow;
-            email.Status = NotificationStatus.Pending;
-
             await db.OutboxEmails.AddAsync(email, ct);
             await db.SaveChangesAsync(ct);
         }
@@ -45,11 +41,7 @@ namespace NotificationService.Infrastructure.Repositories
                 }
 
                 foreach (var item in batch)
-                {
-                    item.Status = NotificationStatus.Processing;
-                    item.LockedAt = now;
-                    item.LockedBy = workerId;
-                }
+                    item.MarkProcessing(workerId, now);
 
                 await db.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
@@ -65,13 +57,11 @@ namespace NotificationService.Infrastructure.Repositories
 
         public async Task MarkEmailAsProcessedAsync(Guid outboxEmailId, CancellationToken ct = default)
         {
-            await db.OutboxEmails
-                .Where(e => e.Id == outboxEmailId)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(e => e.Status, NotificationStatus.Sent)
-                    .SetProperty(e => e.ProcessedAt, DateTime.UtcNow)
-                    .SetProperty(e => e.LockedAt, (DateTime?)null)
-                    .SetProperty(e => e.LockedBy, (string?)null), ct);
+            var email = await db.OutboxEmails
+                .FirstOrDefaultAsync(e => e.Id == outboxEmailId, ct);
+
+            email?.MarkProcessed(DateTime.UtcNow);
+            await db.SaveChangesAsync(ct);
         }
 
         public async Task IncrementEmailRetryAsync(Guid outboxEmailId, string error, CancellationToken ct = default)
@@ -79,14 +69,7 @@ namespace NotificationService.Infrastructure.Repositories
             var email = await db.OutboxEmails.FirstOrDefaultAsync(e => e.Id == outboxEmailId, ct);
             if (email is null) return;
 
-            email.RetryCount++;
-            email.LastError = error;
-            email.LockedAt = null;
-            email.LockedBy = null;
-
-            email.Status = email.RetryCount >= email.MaxRetries
-                ? NotificationStatus.Failed
-                : NotificationStatus.Pending;
+            email.RecordFailure(error);
 
             await db.SaveChangesAsync(ct);
         }
@@ -95,23 +78,22 @@ namespace NotificationService.Infrastructure.Repositories
         {
             var threshold = DateTime.UtcNow - lockExpiry;
 
-            await db.OutboxEmails
+            var emails = await db.OutboxEmails
                 .Where(e =>
                     e.Status == NotificationStatus.Processing &&
                     e.LockedAt != null &&
                     e.LockedAt < threshold)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(e => e.Status, NotificationStatus.Pending)
-                    .SetProperty(e => e.LockedAt, (DateTime?)null)
-                    .SetProperty(e => e.LockedBy, (string?)null), ct);
+                .ToListAsync(ct);
+
+            foreach (var email in emails)
+                email.ReleaseStaleLock();
+
+            await db.SaveChangesAsync(ct);
         }
 
         public async Task AddEmailDeliveriesAsync(IEnumerable<EmailDelivery> deliveries, CancellationToken ct = default)
         {
             var list = deliveries.ToList();
-
-            foreach (var d in list)
-                d.Id = Guid.NewGuid();
 
             await db.EmailDeliveries.AddRangeAsync(list, ct);
             await db.SaveChangesAsync(ct);
