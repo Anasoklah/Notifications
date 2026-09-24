@@ -4,8 +4,7 @@ using System.Text.Json;
 using NotificationService.Core.Enums;
 using NotificationService.Core.ValueObjects;
 
-namespace NotificationService.Core.Entities
-{
+namespace NotificationService.Core.Entities;
    
 public class OutboxNotification
 {
@@ -137,5 +136,4 @@ public class OutboxNotification
             ScheduledAt = scheduledAt ?? DateTime.UtcNow
         };
     }
-}
 }

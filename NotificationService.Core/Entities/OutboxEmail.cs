@@ -1,7 +1,7 @@
 using NotificationService.Core.Enums;
 
-namespace NotificationService.Core.Entities
-{
+namespace NotificationService.Core.Entities;
+
     public class OutboxEmail
     {
         public Guid Id { get; private set; }
@@ -98,4 +98,4 @@ namespace NotificationService.Core.Entities
             LockedBy = null;
         }
     }
-}
+

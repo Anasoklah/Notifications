@@ -2,8 +2,8 @@
 
 using NotificationService.Core.Enums;
 
-namespace NotificationService.Core.Entities
-{
+namespace NotificationService.Core.Entities;
+
  public class NotificationDelivery
 {
     public Guid Id { get; private set; }
@@ -58,5 +58,4 @@ namespace NotificationService.Core.Entities
             Error = error
         };
     }
-}
 }
