@@ -16,19 +16,10 @@ public class TokensRepository(AppDbContext db) : ITokensRepository
 
         if (existing is not null)
         {
-            // Token already exists — reactivate and update ownership if needed
-            existing.UserId = token.UserId;
-            existing.Platform = token.Platform;
-            existing.IsActive = true;
-            existing.UpdatedAt = DateTime.UtcNow;
-            existing.Locale = token.Locale ?? "en";
+            existing.UpdateDeviceToken(token.UserId, token.Locale, token.Platform);
         }
         else
         {
-            token.Id = Guid.NewGuid();
-            token.Locale = token.Locale ?? "en";
-            token.CreatedAt = DateTime.UtcNow;
-            token.UpdatedAt = DateTime.UtcNow;
             await db.DeviceTokens.AddAsync(token, ct);
         }
 
@@ -37,20 +28,23 @@ public class TokensRepository(AppDbContext db) : ITokensRepository
 
     public async Task DeactivateTokenAsync(string token, CancellationToken ct = default)
     {
-        await db.DeviceTokens
-            .Where(t => t.Token == token)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(t => t.IsActive, false)
-                .SetProperty(t => t.UpdatedAt, DateTime.UtcNow), ct);
+        var deviceToken = await db.DeviceTokens
+            .FirstOrDefaultAsync(t => t.Token == token, ct);
+
+        deviceToken?.Deactivate();
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task DeactivateAllUserTokensAsync(string userId, CancellationToken ct = default)
     {
-        await db.DeviceTokens
+        var deviceTokens = await db.DeviceTokens
             .Where(t => t.UserId == userId && t.IsActive)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(t => t.IsActive, false)
-                .SetProperty(t => t.UpdatedAt, DateTime.UtcNow), ct);
+            .ToListAsync(ct);
+
+        foreach (var deviceToken in deviceTokens)
+            deviceToken.Deactivate();
+
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task<List<DeviceToken>> GetActiveTokensByUserIdAsync(string userId, CancellationToken ct = default)

@@ -26,13 +26,11 @@ public class RegisterTokenUseCase(ITokensRepository repo)
         if (!Enum.IsDefined(request.Platform))
             throw new ArgumentException("Platform must be Android, iOS, or Web.", nameof(request));
 
-        var token = new DeviceToken
-        {
-            UserId = request.UserId,
-            Token = request.Token,
-            Platform = request.Platform,
-            Locale = request.Locale
-        };
+        var token = DeviceToken.CreateDeviceToken(
+            request.UserId,
+            request.Token,
+            request.Platform,
+            request.Locale);
 
         await repo.RegisterTokenAsync(token, ct);
 
